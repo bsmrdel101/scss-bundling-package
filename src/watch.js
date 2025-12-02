@@ -1,22 +1,35 @@
 const chokidar = require('chokidar');
-const build = require('./bundler');
+const generateBundle = require('./bundler');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = function watch() {
   let timeout = null;
+  let options = {};
 
-  const watcher = chokidar.watch('src/styles', {
+  const configPath = path.resolve('scss-bundling.config.js');
+  if (fs.existsSync(configPath)) {
+    options = require(configPath);
+  }
+
+  const watcher = chokidar.watch(options.rootDir || 'src/styles', {
     persistent: true,
     ignoreInitial: true,
-    ignored: /bundle\.scss$/,
+    ignored: (filePath) => {
+      const fileName = path.basename(filePath);
+      const customIgnored = options.ignore || [];
+      if (['bundle.scss', ...customIgnored].includes(fileName)) return true;
+      return false;
+    }
   });
 
   const run = () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-      build();
+      generateBundle(options);
     }, 150);
   };
 
   watcher.on('all', run);
-  console.log("Watching SCSS files...");
+  console.log(`Watching SCSS files in ${options.rootDir || 'src/styles'}...`);
 };

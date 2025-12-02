@@ -1,44 +1,45 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT_DIR = path.resolve('src/styles');
-const OUTPUT_FILE = path.resolve('src/styles/bundle.scss');
 
-function getScssFiles(dir) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  let files = [];
+module.exports = function generateBundle(options = {}) {
+  const rootDir = path.resolve(options.rootDir || 'src/styles');
+  const outputFile = path.resolve(options.outputFile || path.join(rootDir, 'bundle.scss'));
+  const ignoredFiles = ['bundle.scss', ...options.ignore || []];
 
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
+  function getScssFiles(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    let files = [];
 
-    if (entry.isDirectory()) {
-      files = files.concat(getScssFiles(fullPath));
-    } else if (
-      entry.isFile() &&
-      entry.name.endsWith('.scss') &&
-      !entry.name.startsWith('bundle') &&
-      entry.name !== 'globals.scss'
-    ) {
-      files.push(fullPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        files = files.concat(getScssFiles(fullPath));
+      } else if (
+        entry.isFile() &&
+        entry.name.endsWith('.scss') &&
+        !ignoredFiles.includes(entry.name)
+      ) {
+        files.push(fullPath);
+      }
     }
+    return files;
   }
 
-  return files;
-}
+  function normalize(filePath) {
+    const relative = path.relative(path.dirname(outputFile), filePath).replace(/\\/g, '/');
+    const noUnderscore = relative.replace(/^_/, '').replace(/\.scss$/, '');
+    return `@use '${noUnderscore}';`;
+  }
 
-function normalize(filePath) {
-  const relative = path.relative(path.dirname(OUTPUT_FILE), filePath).replace(/\\/g, '/');
-  const noUnderscore = relative.replace(/^_/, '').replace(/\.scss$/, '');
-  return `@use '${noUnderscore}';`;
-}
 
-module.exports = function generateBundle() {
-  const scssFiles = getScssFiles(ROOT_DIR);
+  const scssFiles = getScssFiles(rootDir);
   const newImports = new Set(scssFiles.map(normalize));
 
   let currentLines = [];
-  if (fs.existsSync(OUTPUT_FILE)) {
-    currentLines = fs.readFileSync(OUTPUT_FILE, 'utf8')
+  if (fs.existsSync(outputFile)) {
+    currentLines = fs.readFileSync(outputFile, 'utf8')
       .split('\n')
       .map(line => line.trim())
       .filter(Boolean);
@@ -58,6 +59,6 @@ module.exports = function generateBundle() {
     .filter(line => !toRemove.includes(line))
     .concat(toAdd);
 
-  fs.writeFileSync(OUTPUT_FILE, updatedLines.join('\n') + '\n');
+  fs.writeFileSync(outputFile, updatedLines.join('\n') + '\n');
   console.log('bundle.scss updated.');
 }

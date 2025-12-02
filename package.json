@@ -1,6 +1,6 @@
 {
   "name": "scss-bundling",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Automatically create scss imports based on changes to the file system",
   "license": "MIT",
   "keywords": [
