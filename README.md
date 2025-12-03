@@ -10,10 +10,14 @@ Watches for changes in your styles directory and generates a `bundle.scss` file 
 ## Configuration
 Create a `scss-bundling.config.json` file in your project root.
 The generated `bundle.scss` is always ignored by default.
+
+- **rootDir**: directory to watch
+- **outputFile**: bundle output
+- **ignore**: file names to ignore
 ```json
 {
-  "rootDir": "src/styles", // directory to watch
-  "outputFile": "src/styles/bundle.scss", // bundle output
-  "ignore": ["globals.scss", "index.scss"] // file names to ignore
-};
+  "rootDir": "src/styles",
+  "outputFile": "src/styles/bundle.scss",
+  "ignore": ["globals.scss", "index.scss"]
+}
 ```
