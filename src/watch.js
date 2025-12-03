@@ -7,7 +7,7 @@ module.exports = function watch() {
   let timeout = null;
   let options = {};
 
-  const configPath = path.resolve('scss-bundling.config.js');
+  const configPath = path.resolve('scss-bundling.config.json');
   if (fs.existsSync(configPath)) {
     options = require(configPath);
   }
